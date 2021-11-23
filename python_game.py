@@ -4,6 +4,7 @@ from time import sleep, time
 
 pauseState    = False
 livesMode     = False
+vehicleNumbers = 0
 startingPoint = [360, 650]
 windowWidth   = 800
 windowHeight  = 700
@@ -87,6 +88,7 @@ def pause(textOutput):
                 playerVehicle.draw = myCanvas.create_image(pausePosition[0] + 75,
                                                            pausePosition[1],
                                                            image=playerVehicle.image)
+
             elif pausePosition[0] >= 735:
                 playerVehicle.draw = myCanvas.create_image(pausePosition[0] - 75,
                                                            pausePosition[1],
@@ -99,13 +101,12 @@ def pause(textOutput):
 
 
         else:
-            pass
-            # playerVehicle.draw = myCanvas.create_image(startingPoint[0],
-            #                                            startingPoint[1],
-            #                                            image=playerVehicle.image)
-            # livesMode = False
-            # delete_vehicle()
-            # # create_vehicle()
+            playerVehicle.draw = myCanvas.create_image(startingPoint[0],
+                                                       startingPoint[1],
+                                                       image=playerVehicle.image)
+            livesMode = False
+            delete_vehicle()
+            create_vehicle()
 
         main_code()
     else:
@@ -151,17 +152,17 @@ def collision(pos, pos2):
         return True
     else:
         return False
+
 def delete_vehicle():
     for i in vehicleOpposite[-vehicleNumbers:]:
             myCanvas.delete(i.draw)
             i.state = "Deleted"
 
 # create_vehicle()
-
+timeStamps = []
+startTime = time()
 def main_code():
     global pauseState, playerLives, timeText
-    timeStamps = []
-    startTime = time()
     while (not pauseState):
         # print(pauseState)
         elapsedTime = round(time() - startTime, 2)
@@ -169,6 +170,7 @@ def main_code():
         elapsedTime = int(elapsedTime)
         if elapsedTime % 5 == 0 and elapsedTime not in timeStamps:
             timeStamps.append(elapsedTime)
+            delete_vehicle()
             create_vehicle()
 
         # pos = playerVehicle.get_position()
@@ -187,7 +189,6 @@ def main_code():
                 i.state = "Deleted"
                 continue
             myCanvas.move(i.draw, 0, defualtSpeed)
-
             if i.draw in myCanvas.find_all() and collision(playerVehicle.get_position(), i.get_position()):
                 playerLives -= 1
                 myCanvas.itemconfig(livesText, text='Lives: '+str(playerLives))
