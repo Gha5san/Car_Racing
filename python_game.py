@@ -2,7 +2,9 @@ from tkinter import *
 from random import randint, choice, shuffle
 from time import sleep, time
 
-pauseState         = False
+pauseState    = False
+livesMode     = False
+startingPoint = [360, 650]
 windowWidth   = 800
 windowHeight  = 700
 vehicleWidth  = 55
@@ -37,7 +39,7 @@ class Vehicle():
     def position_update(self):
         pos = self.get_position()
         if pos[1] < 25 or pos[1] > 675 or pos[0] < 125 or pos[0] > 675:
-            pause(None)
+            pause("Pause")
         else:
             if self.dir == "up":
                 myCanvas.move(self.draw, 0, -self.speed - defualtSpeed)
@@ -72,35 +74,50 @@ class Vehicle():
     def dir_right(self, event):
         self.dir = "right"
 
-def pause(event):
-    global pauseState, pauseText
+def pause(textOutput):
+    global pauseState, pauseText, resumeText, livesMode
     if pauseState:
         myCanvas.delete(pauseText)
+        myCanvas.delete(resumeText)
         pauseState = False
         pausePosition = playerVehicle.get_position()
+        myCanvas.delete(playerVehicle.draw)
+        if not livesMode:
+            if pausePosition[0] <= 115:
+                playerVehicle.draw = myCanvas.create_image(pausePosition[0] + 75,
+                                                           pausePosition[1],
+                                                           image=playerVehicle.image)
+            elif pausePosition[0] >= 735:
+                playerVehicle.draw = myCanvas.create_image(pausePosition[0] - 75,
+                                                           pausePosition[1],
+                                                           image=playerVehicle.image)
 
-        if pausePosition[0] <= 115:
-            myCanvas.delete(playerVehicle.draw)
-            playerVehicle.draw = myCanvas.create_image(pausePosition[0] + 75,
-                                                       pausePosition[1],
-                                                       image=playerVehicle.image)
+            else:
+                playerVehicle.draw = myCanvas.create_image(pausePosition[0],
+                                                           pausePosition[1],
+                                                           image=playerVehicle.image)
 
-        elif pausePosition[0] >= 735:
-            myCanvas.delete(playerVehicle.draw)
-            playerVehicle.draw = myCanvas.create_image(pausePosition[0] - 75,
-                                                       pausePosition[1],
-                                                       image=playerVehicle.image)
 
         else:
-            myCanvas.delete(playerVehicle.draw)
-            playerVehicle.draw = myCanvas.create_image(pausePosition[0],
-                                                       pausePosition[1],
-                                                       image=playerVehicle.image)
+            pass
+            # playerVehicle.draw = myCanvas.create_image(startingPoint[0],
+            #                                            startingPoint[1],
+            #                                            image=playerVehicle.image)
+            # livesMode = False
+            # delete_vehicle()
+            # # create_vehicle()
+
         main_code()
     else:
-        pauseText = myCanvas.create_text(400, 350, text="Pause", font=("Aerial", 100), fill="Black")
-        pauseState = True
+        if textOutput == "Pause":
+            pauseText = myCanvas.create_text(400, 350, text=textOutput, font=("Aerial", 100), fill="Black")
+            resumeText = myCanvas.create_text(400, 450, text="Click p to resume", font=("Aerial", 20), fill="Black")
+        elif textOutput.startswith("Y"):
+            pauseText = myCanvas.create_text(400, 350, text=textOutput, font=("Aerial", 30), fill="red")
+            resumeText = myCanvas.create_text(400, 450, text="Click p to resume", font=("Aerial", 20), fill="red")
+            livesMode = True
 
+        pauseState = True
 
 def player_increase_speed(event):
     global playerDefualtSpeed
@@ -110,14 +127,14 @@ def player_decrease_speed(event):
     global playerDefualtSpeed
     playerDefualtSpeed -= 2
 
-playerVehicle = Vehicle(360, 650, "Car", "player/")
+playerVehicle = Vehicle(startingPoint[0], startingPoint[1], "Car", "player/")
 myCanvas.bind_all('<Up>', playerVehicle.dir_up)
 myCanvas.bind_all('<Down>', playerVehicle.dir_down)
 myCanvas.bind_all('<Left>', playerVehicle.dir_left)
 myCanvas.bind_all('<Right>', playerVehicle.dir_right)
 myCanvas.bind_all('<a>', player_decrease_speed)
 myCanvas.bind_all('<d>', player_increase_speed)
-myCanvas.bind_all('<p>', pause)
+myCanvas.bind_all('<p>', lambda x: pause("Pause"))
 
 vehicleOpposite = []
 loop = True
@@ -134,13 +151,18 @@ def collision(pos, pos2):
         return True
     else:
         return False
+def delete_vehicle():
+    for i in vehicleOpposite[-vehicleNumbers:]:
+            myCanvas.delete(i.draw)
+            i.state = "Deleted"
 
 # create_vehicle()
-timeStamps = []
-startTime = time()
+
 def main_code():
     global pauseState, playerLives, timeText
-    while (True and not pauseState):
+    timeStamps = []
+    startTime = time()
+    while (not pauseState):
         # print(pauseState)
         elapsedTime = round(time() - startTime, 2)
         myCanvas.itemconfig(timeText, text=f'Time: {elapsedTime}')
@@ -165,9 +187,11 @@ def main_code():
                 i.state = "Deleted"
                 continue
             myCanvas.move(i.draw, 0, defualtSpeed)
+
             if i.draw in myCanvas.find_all() and collision(playerVehicle.get_position(), i.get_position()):
                 playerLives -= 1
                 myCanvas.itemconfig(livesText, text='Lives: '+str(playerLives))
+                pause(f"You have {playerLives} lives left")
 
         sleep(0.02)
         window.update()
