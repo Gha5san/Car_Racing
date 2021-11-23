@@ -36,13 +36,14 @@ class Vehicle():
 
     def position_update(self):
         pos = self.get_position()
+
         if pos[1] < 25 or pos[1] > 675 or pos[0] < 125 or pos[0] > 675:
             pass
         else:
             if self.dir == "up":
                 canvas.move(self.draw, 0, -self.speed - defualtSpeed)
             elif self.dir == "down":
-                canvas.move(self.draw, 0, self.speed)
+                canvas.move(self.draw, 0, self.speed + defualtSpeed) #edit the speed
             elif self.dir == "left":
                 canvas.move(self.draw, -75, 0)
             elif self.dir == "right":
@@ -80,7 +81,7 @@ def player_decrease_speed(event):
     playerDefualtSpeed -= 2
 
 
-playerVehicle = Vehicle(360, 700, "Car", "player/")
+playerVehicle = Vehicle(360, 650, "Car", "player/")
 canvas.bind_all('<Up>', playerVehicle.dir_up)
 canvas.bind_all('<Down>', playerVehicle.dir_down)
 canvas.bind_all('<Left>', playerVehicle.dir_left)
@@ -98,6 +99,12 @@ def create_vehicle():
     for i in range(5):
         vehicleOpposite.append(Vehicle(lanes[i], -50, choice(vehicleOption)))
 
+def collision(pos, pos2):
+    if pos[0] < pos2[2] and pos[1] < pos2[3] and pos[2] > pos2[0] and pos[3] > pos2[1]:
+        return True
+    else:
+        return False
+
 # create_vehicle()
 timeStamps = []
 startTime = time()
@@ -112,18 +119,21 @@ while True:
     # pos = playerVehicle.get_position()
     #update player vehicle position
 
-    canvas.move(playerVehicle.draw, 0, -playerDefualtSpeed+5)
+    # canvas.move(playerVehicle.draw, 0, -playerDefualtSpeed+9)
     playerVehicle.position_update()
     if playerVehicle.get_position()[1] < -50:
         canvas.delete(playerVehicle.draw)
         break
-
+    # print(playerVehicle.get_position())
     # opposite vehicle motion
     for i in vehicleOpposite[-5:]:
         if i.state != "Deleted" and i.get_position()[1] > 800:
             canvas.delete(i.draw)
             i.state = "Deleted"
+            continue
         canvas.move(i.draw, 0, defualtSpeed)
+        if i.draw in canvas.find_all() and collision(playerVehicle.get_position(), i.get_position()):
+            quit()
 
     sleep(0.02)
     window.update()
