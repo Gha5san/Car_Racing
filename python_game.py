@@ -30,13 +30,13 @@ gameLevels = {
     5: {"score":500,
         "speed":30,
         "maxVehicles":7,
-        "miniVehicles":6,
+        "miniVehicles":4,
         "maxPeriod":2,
         "miniPeriod":1},
     6: {"score":700,
         "speed":40,
         "maxVehicles":7,
-        "miniVehicles":6,
+        "miniVehicles":3,
         "maxPeriod":1,
         "miniPeriod":1}}
 
@@ -118,6 +118,8 @@ class Vehicle():
 
     def get_position(self):
         pos = myCanvas.coords(self.draw)
+        if pos == []:
+            pos =[0, 900]
         pos = pos + [pos[0] + self.width, pos[1] + self.height]
         return pos
 
@@ -164,8 +166,8 @@ def pause(textOutput):
                                                        image=playerVehicle.image,
                                                        tag=playerVehicle.tag)
             livesMode = False
-            delete_vehicle()
-            create_vehicle()
+            delete_vehicle(True)
+            # create_vehicle()
 
         main_code()
     else:
@@ -203,10 +205,17 @@ def collision(pos, pos2):
     else:
         return False
 
-def delete_vehicle():
-    for i in vehicleOpposite:
+def delete_vehicle(all):
+    if all:
+        for i in vehicleOpposite:
+            i.state == "Deleted"
             myCanvas.delete(i.draw)
-            i.state = "Deleted"
+            del i
+    else:
+        for i in vehicleOpposite:
+            if i.state == "Deleted":
+                myCanvas.delete(i.draw)
+                del i
 
 def change_vehicle():
     global  chosenVehicle, vehicleChoice, vehicleButton, vehicleButtonWindow
@@ -268,12 +277,12 @@ def main_code():
         score = (elapsedTime * defualtSpeed) / 10
         myCanvas.itemconfig(scoreText, text=f'Score: {round(score, 2)}')
         elapsedTime = int(elapsedTime)
-        print(elapsedTime)
+        # print(elapsedTime)
         period = randint(miniPeriod, maxPeriod)
         if elapsedTime % period == 0 and elapsedTime not in timeStamps:
             timeStamps.append(elapsedTime)
-            if len(myCanvas.find_withtag("bots")) >= 2 * maxVehicleNumber:
-                delete_vehicle()
+            # if len(myCanvas.find_withtag("bots")) >= 2 * maxVehicleNumber:
+            delete_vehicle(False)
             create_vehicle()
             # print("speed: ",defualtSpeed, "vehivles: ",len(myCanvas.find_withtag("bots")), "time: ",period)
         unusedTime = 0
@@ -303,7 +312,7 @@ def main_code():
         window.update()
     else:
         if pauseState: unusedTime = time()
-        elif counter < len(gameLevels) and score<gameLevels[counter]["score"]:
+        elif counter < len(gameLevels) and score>gameLevels[counter]["score"]:
             counter += 1
             main_code()
         else:
