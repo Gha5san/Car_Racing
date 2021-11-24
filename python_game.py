@@ -2,19 +2,60 @@ from tkinter import *
 from random import randint, choice, shuffle
 from time import sleep, time
 
+gameLevels = {
+    1: {"score":50,
+        "speed":10,
+        "maxVehicles":4,
+        "miniVehicles":0,
+        "maxPeriod":6,
+        "miniPeriod":3},
+    2: {"score":125,
+        "speed":15,
+        "maxVehicles":6,
+        "miniVehicles":4,
+        "maxPeriod":5,
+        "miniPeriod":3},
+    3: {"score":225,
+        "speed":20,
+        "maxVehicles":7,
+        "miniVehicles":4,
+        "maxPeriod":4,
+        "miniPeriod":2},
+    4: {"score":350,
+        "speed":25,
+        "maxVehicles":7,
+        "miniVehicles":5,
+        "maxPeriod":3,
+        "miniPeriod":2},
+    5: {"score":500,
+        "speed":30,
+        "maxVehicles":7,
+        "miniVehicles":6,
+        "maxPeriod":2,
+        "miniPeriod":1},
+    6: {"score":700,
+        "speed":40,
+        "maxVehicles":7,
+        "miniVehicles":6,
+        "maxPeriod":1,
+        "miniPeriod":1}}
+
 pauseState    = False
 livesMode     = False
-cheatIsOn     = False
+cheatIsOn     = True
 vehicleNumbers = 0
-maxVehicleNumber  = 6
-miniVehicleNumber = 0
+score         = 0
 startingPoint = [360, 650]
 windowWidth   = 800
 windowHeight  = 700
 vehicleWidth  = 55
 vehicleHeight = 128
-defualtSpeed  = 10
-playerDefualtSpeed = 3
+defualtSpeed  = gameLevels[1]["speed"]
+playerDefualtSpeed = 2
+maxVehicleNumber  = gameLevels[1]["maxVehicles"]
+miniVehicleNumber = gameLevels[1]["miniVehicles"]
+maxPeriod = gameLevels[1]["maxPeriod"]
+miniPeriod = gameLevels[1]["miniPeriod"]
 playerLives   = 5
 vehicleOption = ['Ambulance', 'Audi', 'Black_viper', 'Car', 'Mini_truck', 'Mini_van', 'Police', 'taxi', 'truck']
 
@@ -130,10 +171,10 @@ def pause(textOutput):
     else:
         if textOutput == "Pause":
             pauseText = myCanvas.create_text(400, 350, text=textOutput, font=("Aerial", 100), fill="Black")
-            resumeText = myCanvas.create_text(400, 450, text="Click p to resume", font=("Aerial", 20), fill="Black")
+            resumeText = myCanvas.create_text(400, 450, text="Click space to resume", font=("Aerial", 20), fill="Black")
         elif textOutput.startswith("Y"):
             pauseText = myCanvas.create_text(400, 350, text=textOutput, font=("Aerial", 30), fill="red")
-            resumeText = myCanvas.create_text(400, 450, text="Click p to resume", font=("Aerial", 20), fill="red")
+            resumeText = myCanvas.create_text(400, 450, text="Click space to resume", font=("Aerial", 20), fill="red")
             livesMode = True
 
         pauseState = True
@@ -198,9 +239,10 @@ def intiating():
     myCanvas.bind_all('<Right>', playerVehicle.dir_right)
     myCanvas.bind_all('<a>', player_decrease_speed)
     myCanvas.bind_all('<d>', player_increase_speed)
-    myCanvas.bind_all('<p>', lambda x: pause("Pause"))
-    myCanvas.bind_all("<KeyPress-c>",   cheat_mode_on)
-    myCanvas.bind_all("<KeyRelease-c>", cheat_mode_off)
+    myCanvas.bind_all('<space>', lambda x: pause("Pause"))
+    myCanvas.bind_all('<KeyPress-c>',   cheat_mode_on)
+    myCanvas.bind_all('<KeyRelease-c>', cheat_mode_off)
+
 
     main_code()
 
@@ -208,9 +250,17 @@ timeStamps = []
 startTime = time()
 unusedTime = 0
 totatUnusedTime = 0
+counter = 1
 def main_code():
-    global pauseState, playerLives, scoreText, unusedTime, totatUnusedTime, score
-    while (not pauseState):
+    global pauseState, playerLives, scoreText, unusedTime, totatUnusedTime, score, counter, defualtSpeed, \
+    maxVehicleNumber, miniVehicleNumber, maxPeriod, miniPeriod
+
+    defualtSpeed = gameLevels[counter]["speed"]
+    maxVehicleNumber = gameLevels[counter]["maxVehicles"]
+    miniVehicleNumber = gameLevels[counter]["miniVehicles"]
+    maxPeriod = gameLevels[counter]["maxPeriod"]
+    miniPeriod = gameLevels[counter]["miniPeriod"]
+    while (not pauseState and score<gameLevels[counter]["score"]):
         if unusedTime != 0:
             unusedTime = time() - unusedTime
             totatUnusedTime += unusedTime
@@ -218,11 +268,14 @@ def main_code():
         score = (elapsedTime * defualtSpeed) / 10
         myCanvas.itemconfig(scoreText, text=f'Score: {round(score, 2)}')
         elapsedTime = int(elapsedTime)
-        if elapsedTime % 2 == 0 and elapsedTime not in timeStamps:
+        print(elapsedTime)
+        period = randint(miniPeriod, maxPeriod)
+        if elapsedTime % period == 0 and elapsedTime not in timeStamps:
             timeStamps.append(elapsedTime)
             if len(myCanvas.find_withtag("bots")) >= 2 * maxVehicleNumber:
                 delete_vehicle()
             create_vehicle()
+            # print("speed: ",defualtSpeed, "vehivles: ",len(myCanvas.find_withtag("bots")), "time: ",period)
         unusedTime = 0
 
         # update player vehicle position
@@ -249,8 +302,12 @@ def main_code():
         sleep(0.02)
         window.update()
     else:
-        unusedTime = time()
-
+        if pauseState: unusedTime = time()
+        elif counter < len(gameLevels) and score<gameLevels[counter]["score"]:
+            counter += 1
+            main_code()
+        else:
+            quit()
 chosenVehicle = choice(vehicleOption)
 vehicleChoice = PhotoImage(file="images/player/" + chosenVehicle +".png")
 vehicleButton = Button(window, image=vehicleChoice, borderwidth=0, bg="#857d7a", command=change_vehicle, activebackground="#857d7a")
@@ -263,11 +320,3 @@ startButtonWindow = myCanvas.create_window(335, 200, window=startButton)
 
 # intiating()
 window.mainloop()
-
-
-
-
-
-
-
-
