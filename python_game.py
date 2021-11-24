@@ -83,7 +83,8 @@ class Vehicle():
     def __init__(self, x, y, vehicleType, vehicleTag, player=""):
         self.x     = x
         self.y     = y
-        self.speed = 10 + defualtSpeed
+        if player: self.speed = 10 + defualtSpeed
+        else: self.speed = randint(defualtSpeed, defualtSpeed + 5)
         self.dir   = ""
         self.tag = vehicleTag
         self.image = PhotoImage(file=f"images/" + player + vehicleType + ".png")
@@ -300,7 +301,7 @@ def main_code():
                 myCanvas.delete(i.draw)
                 i.state = "Deleted"
                 continue
-            myCanvas.move(i.draw, 0, defualtSpeed)
+            myCanvas.move(i.draw, 0, i.speed)
             # print(len(myCanvas.find_withtag("bots")))
             if not cheatIsOn:
                 if i.draw in myCanvas.find_withtag("bots") and collision(playerVehicle.get_position(), i.get_position()):
