@@ -5,6 +5,8 @@ from time import sleep, time
 pauseState    = False
 livesMode     = False
 vehicleNumbers = 0
+maxVehicleNumber  = 6
+miniVehicleNumber = 0
 startingPoint = [360, 650]
 windowWidth   = 800
 windowHeight  = 700
@@ -26,13 +28,14 @@ timeText = myCanvas.create_text(100, 10, text='Time: 0', font=('Aerial', 15), an
 
 class Vehicle():
 
-    def __init__(self, x, y, vehicleType, player=""):
+    def __init__(self, x, y, vehicleType, vehicleTag, player=""):
         self.x     = x
         self.y     = y
         self.speed = 10 + defualtSpeed
         self.dir   = ""
+        self.tag = vehicleTag
         self.image = PhotoImage(file=f"images/" + player + vehicleType + ".png")
-        self.draw  = myCanvas.create_image(self.x, self.y, image=self.image)
+        self.draw  = myCanvas.create_image(self.x, self.y, image=self.image, tag=self.tag)
         self.state = "Exist"
         self.width = vehicleWidth
         self.height= vehicleHeight
@@ -87,23 +90,27 @@ def pause(textOutput):
             if pausePosition[0] <= 115:
                 playerVehicle.draw = myCanvas.create_image(pausePosition[0] + 75,
                                                            pausePosition[1],
-                                                           image=playerVehicle.image)
-
+                                                           image=playerVehicle.image,
+                                                           tag=playerVehicle.tag)
+                # myCanvas.move(playerVehicle, 75, 0)
             elif pausePosition[0] >= 735:
                 playerVehicle.draw = myCanvas.create_image(pausePosition[0] - 75,
                                                            pausePosition[1],
-                                                           image=playerVehicle.image)
+                                                           image=playerVehicle.image,
+                                                           tag=playerVehicle.tag)
 
             else:
                 playerVehicle.draw = myCanvas.create_image(pausePosition[0],
                                                            pausePosition[1],
-                                                           image=playerVehicle.image)
+                                                           image=playerVehicle.image,
+                                                           tag=playerVehicle.tag)
 
 
         else:
             playerVehicle.draw = myCanvas.create_image(startingPoint[0],
                                                        startingPoint[1],
-                                                       image=playerVehicle.image)
+                                                       image=playerVehicle.image,
+                                                       tag=playerVehicle.tag)
             livesMode = False
             delete_vehicle()
             create_vehicle()
@@ -128,7 +135,7 @@ def player_decrease_speed(event):
     global playerDefualtSpeed
     playerDefualtSpeed -= 2
 
-playerVehicle = Vehicle(startingPoint[0], startingPoint[1], "Car", "player/")
+playerVehicle = Vehicle(startingPoint[0], startingPoint[1], "Car", "player", "player/" )
 myCanvas.bind_all('<Up>', playerVehicle.dir_up)
 myCanvas.bind_all('<Down>', playerVehicle.dir_down)
 myCanvas.bind_all('<Left>', playerVehicle.dir_left)
@@ -141,11 +148,11 @@ vehicleOpposite = []
 loop = True
 def create_vehicle():
     global vehicleNumbers
-    vehicleNumbers = int(randint(2, 6))
+    vehicleNumbers = int(randint(miniVehicleNumber, maxVehicleNumber))
     lanes = [135, 210, 285, 360, 435, 510, 585, 660]
     shuffle(lanes)
     for i in range(vehicleNumbers):
-        vehicleOpposite.append(Vehicle(lanes[i], -50, choice(vehicleOption)))
+        vehicleOpposite.append(Vehicle(lanes[i], -50, choice(vehicleOption), "bots"))
 
 def collision(pos, pos2):
     if pos[0] < pos2[2] and pos[1] < pos2[3] and pos[2] > pos2[0] and pos[3] > pos2[1]:
@@ -154,28 +161,33 @@ def collision(pos, pos2):
         return False
 
 def delete_vehicle():
-    for i in vehicleOpposite[-vehicleNumbers:]:
+    for i in vehicleOpposite:
             myCanvas.delete(i.draw)
             i.state = "Deleted"
 
 # create_vehicle()
 timeStamps = []
 startTime = time()
+unusedTime = 0
+totatUnusedTime = 0
 def main_code():
-    global pauseState, playerLives, timeText
+    global pauseState, playerLives, timeText, unusedTime, totatUnusedTime
     while (not pauseState):
-        # print(pauseState)
-        elapsedTime = round(time() - startTime, 2)
-        myCanvas.itemconfig(timeText, text=f'Time: {elapsedTime}')
+        if unusedTime != 0:
+            unusedTime = time() - unusedTime
+            totatUnusedTime += unusedTime
+        elapsedTime = time() - (startTime + totatUnusedTime)
+        myCanvas.itemconfig(timeText, text=f'Time: {round(elapsedTime, 2)}')
         elapsedTime = int(elapsedTime)
-        if elapsedTime % 5 == 0 and elapsedTime not in timeStamps:
+        if elapsedTime % randint(2, 5) == 0 and elapsedTime not in timeStamps:
             timeStamps.append(elapsedTime)
-            delete_vehicle()
+            if len(myCanvas.find_withtag("bots")) >= 2*maxVehicleNumber:
+                delete_vehicle()
             create_vehicle()
+        unusedTime = 0
 
-        # pos = playerVehicle.get_position()
+
         #update player vehicle position
-
         myCanvas.move(playerVehicle.draw, 0, -playerDefualtSpeed+9)
         playerVehicle.position_update()
         if playerVehicle.get_position()[1] < -50:
@@ -183,19 +195,23 @@ def main_code():
             break
         # print(playerVehicle.get_position())
         # opposite vehicle motion
-        for i in vehicleOpposite[-vehicleNumbers:]:
+        for i in vehicleOpposite:
             if i.state != "Deleted" and i.get_position()[1] > 800:
                 myCanvas.delete(i.draw)
                 i.state = "Deleted"
                 continue
             myCanvas.move(i.draw, 0, defualtSpeed)
-            if i.draw in myCanvas.find_all() and collision(playerVehicle.get_position(), i.get_position()):
+            # print(len(myCanvas.find_withtag("bots")))
+            if i.draw in myCanvas.find_withtag("bots") and collision(playerVehicle.get_position(), i.get_position()):
                 playerLives -= 1
                 myCanvas.itemconfig(livesText, text='Lives: '+str(playerLives))
                 pause(f"You have {playerLives} lives left")
 
         sleep(0.02)
         window.update()
+    else:
+        unusedTime = time()
+
 main_code()
 
 window.mainloop()
