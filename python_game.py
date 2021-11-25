@@ -3,37 +3,37 @@ from random import randint, choice, shuffle
 from time import sleep, time
 
 gameLevels = {
-    1: {"score":50,
+    1: {"score":25,
         "speed":5,
         "maxVehicles":3,
         "miniVehicles":0,
         "maxPeriod":6,
         "miniPeriod":3},
-    2: {"score":125,
+    2: {"score":75,
         "speed":10,
         "maxVehicles":4,
         "miniVehicles":1,
         "maxPeriod":5,
         "miniPeriod":3},
-    3: {"score":225,
+    3: {"score":150,
         "speed":15,
         "maxVehicles":5,
         "miniVehicles":2,
         "maxPeriod":4,
         "miniPeriod":2},
-    4: {"score":350,
+    4: {"score":250,
         "speed":20,
         "maxVehicles":6,
         "miniVehicles":3,
         "maxPeriod":3,
         "miniPeriod":2},
-    5: {"score":500,
+    5: {"score":375,
         "speed":25,
         "maxVehicles":7,
         "miniVehicles":4,
         "maxPeriod":2,
         "miniPeriod":1},
-    6: {"score":700,
+    6: {"score":550,
         "speed":30,
         "maxVehicles":7,
         "miniVehicles":6,
@@ -310,14 +310,19 @@ def main_code():
     miniVehicleNumber = gameLevels[counter]["miniVehicles"]
     maxPeriod = gameLevels[counter]["maxPeriod"]
     miniPeriod = gameLevels[counter]["miniPeriod"]
+
     while (not pauseState and score<gameLevels[counter]["score"]):
         if unusedTime != 0:
             unusedTime = time() - unusedTime
             totatUnusedTime += unusedTime
         elapsedTime = time() - (startTime + totatUnusedTime)
-        score = (elapsedTime * defualtSpeed) / 10
+        if counter > 1:
+            score = round(((elapsedTime - 50*(counter-1)) * defualtSpeed) / 10, 2)
+            score += gameLevels[counter-1]["score"]
+        else: score = (elapsedTime * defualtSpeed) / 10
         myCanvas.itemconfig(scoreText, text=f'Score: {round(score, 2)}')
         elapsedTime = int(elapsedTime)
+        # print(elapsedTime)
         # print(elapsedTime)
         # period = randint(miniPeriod, maxPeriod)
         if elapsedTime % period == 0 and elapsedTime not in timeStamps:
