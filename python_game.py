@@ -4,47 +4,49 @@ from time import sleep, time
 
 gameLevels = {
     1: {"score":50,
-        "speed":10,
-        "maxVehicles":4,
+        "speed":5,
+        "maxVehicles":3,
         "miniVehicles":0,
         "maxPeriod":6,
         "miniPeriod":3},
     2: {"score":125,
-        "speed":15,
-        "maxVehicles":6,
-        "miniVehicles":4,
+        "speed":10,
+        "maxVehicles":4,
+        "miniVehicles":1,
         "maxPeriod":5,
         "miniPeriod":3},
     3: {"score":225,
-        "speed":20,
-        "maxVehicles":7,
-        "miniVehicles":4,
+        "speed":15,
+        "maxVehicles":5,
+        "miniVehicles":2,
         "maxPeriod":4,
         "miniPeriod":2},
     4: {"score":350,
-        "speed":25,
-        "maxVehicles":7,
-        "miniVehicles":5,
+        "speed":20,
+        "maxVehicles":6,
+        "miniVehicles":3,
         "maxPeriod":3,
         "miniPeriod":2},
     5: {"score":500,
-        "speed":30,
+        "speed":25,
         "maxVehicles":7,
         "miniVehicles":4,
         "maxPeriod":2,
         "miniPeriod":1},
     6: {"score":700,
-        "speed":40,
+        "speed":30,
         "maxVehicles":7,
-        "miniVehicles":3,
+        "miniVehicles":6,
         "maxPeriod":1,
         "miniPeriod":1}}
 
 pauseState    = False
 livesMode     = False
 cheatIsOn     = True
+bossMode      = False
 vehicleNumbers = 0
 score         = 0
+period = 5
 startingPoint = [360, 650]
 windowWidth   = 800
 windowHeight  = 700
@@ -77,6 +79,7 @@ for i in range(100, windowWidth - 99, 75):
 
 livesText = myCanvas.create_text(10, 10, text='Lives: ' + str(playerLives), font=('Aerial', 15), anchor='nw')
 scoreText = myCanvas.create_text(100, 10, text='Score: 0', font=('Aerial', 15), anchor='nw')
+speedText = myCanvas.create_text(750, 10, text=f'Speed: {playerDefualtSpeed} mph', font=('Aerial', 15), anchor='ne')
 
 class Vehicle():
 
@@ -84,7 +87,7 @@ class Vehicle():
         self.x     = x
         self.y     = y
         if player: self.speed = 10 + defualtSpeed
-        else: self.speed = randint(defualtSpeed, defualtSpeed + 5)
+        else: self.speed = randint(defualtSpeed - 2, defualtSpeed + 5)
         self.dir   = ""
         self.tag = vehicleTag
         self.image = PhotoImage(file=f"images/" + player + vehicleType + ".png")
@@ -185,10 +188,12 @@ def pause(textOutput):
 def player_increase_speed(event):
     global playerDefualtSpeed
     playerDefualtSpeed += 2
+    myCanvas.itemconfig(speedText, text=f'Speed: {playerDefualtSpeed} mph')
 
 def player_decrease_speed(event):
     global playerDefualtSpeed
     playerDefualtSpeed -= 2
+    myCanvas.itemconfig(speedText, text=f'Speed: {playerDefualtSpeed} mph')
 
 vehicleOpposite = []
 loop = True
@@ -207,9 +212,11 @@ def collision(pos, pos2):
         return False
 
 def delete_vehicle(all):
+    global period, miniPeriod, maxPeriod
+    period = randint(miniPeriod, maxPeriod)
     if all:
         for i in vehicleOpposite:
-            i.state == "Deleted"
+            i.state = "Deleted"
             myCanvas.delete(i.draw)
             del i
     else:
@@ -236,6 +243,26 @@ def cheat_mode_on(event):
 def cheat_mode_off(event):
     global cheatIsOn
     cheatIsOn = False
+
+def boss_key(event):
+    global bossImage
+
+    def remove_fullscreen():
+        bossWindow.destroy()
+        myCanvas.bind_all('<Return>', boss_key)
+        window.deiconify()
+
+    pause("Pause")
+    window.withdraw()
+    bossWindow = Toplevel(window)
+    bossWindow.title("TradingView")
+    bossWindow.iconbitmap('Capture.png')
+    bossImage = PhotoImage(file="Capture.PNG")
+    labelImage = Label(bossWindow, image=bossImage)
+    labelImage.pack()
+    myCanvas.unbind('<Return>')
+    bossWindow.protocol("WM_DELETE_WINDOW", remove_fullscreen)
+
 def intiating():
     global playerVehicle
 
@@ -252,6 +279,7 @@ def intiating():
     myCanvas.bind_all('<space>', lambda x: pause("Pause"))
     myCanvas.bind_all('<KeyPress-c>',   cheat_mode_on)
     myCanvas.bind_all('<KeyRelease-c>', cheat_mode_off)
+    myCanvas.bind_all('<Return>', boss_key)
 
 
     main_code()
@@ -263,7 +291,7 @@ totatUnusedTime = 0
 counter = 1
 def main_code():
     global pauseState, playerLives, scoreText, unusedTime, totatUnusedTime, score, counter, defualtSpeed, \
-    maxVehicleNumber, miniVehicleNumber, maxPeriod, miniPeriod
+    maxVehicleNumber, miniVehicleNumber, maxPeriod, miniPeriod, period
 
     defualtSpeed = gameLevels[counter]["speed"]
     maxVehicleNumber = gameLevels[counter]["maxVehicles"]
@@ -279,7 +307,7 @@ def main_code():
         myCanvas.itemconfig(scoreText, text=f'Score: {round(score, 2)}')
         elapsedTime = int(elapsedTime)
         # print(elapsedTime)
-        period = randint(miniPeriod, maxPeriod)
+        # period = randint(miniPeriod, maxPeriod)
         if elapsedTime % period == 0 and elapsedTime not in timeStamps:
             timeStamps.append(elapsedTime)
             # if len(myCanvas.find_withtag("bots")) >= 2 * maxVehicleNumber:
