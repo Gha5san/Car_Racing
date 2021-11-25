@@ -235,7 +235,14 @@ def change_vehicle():
     myCanvas.delete(vehicleButtonWindow)
     vehicleButton = Button(window, image=vehicleChoice, borderwidth=0, bg="#857d7a", command=change_vehicle, activebackground="#857d7a")
     vehicleButtonWindow = myCanvas.create_window(336, 590, anchor=NW, window=vehicleButton)
-    if selectVehicle in myCanvas.find_all(): myCanvas.delete(selectVehicle)
+    # if selectVehicle in myCanvas.find_all(): myCanvas.delete(selectVehicle)
+    myCanvas.itemconfig(selectVehicle, text=chosenVehicle)
+
+def customise():
+    pass
+
+def leader_board():
+    pass
 
 def cheat_mode_on(event):
     global cheatIsOn
@@ -267,7 +274,12 @@ def intiating():
     global playerVehicle
 
     myCanvas.delete(startButtonWindow)
+    myCanvas.delete(loadButtonWindow)
+    myCanvas.delete(leaderBoardButtonWindow)
+    myCanvas.delete(customiseButtonWindow)
+    myCanvas.delete(quitButtonWindow)
     myCanvas.delete(vehicleButtonWindow)
+
     if selectVehicle in myCanvas.find_all(): myCanvas.delete(selectVehicle)
     playerVehicle = Vehicle(startingPoint[0], startingPoint[1], chosenVehicle, "player", "player/")
     myCanvas.bind_all('<Up>', playerVehicle.dir_up)
@@ -346,14 +358,28 @@ def main_code():
             main_code()
         else:
             quit()
+
+###################################################################################
 chosenVehicle = choice(vehicleOption)
 vehicleChoice = PhotoImage(file="images/player/" + chosenVehicle +".png")
-vehicleButton = Button(window, image=vehicleChoice, borderwidth=0, bg="#857d7a", command=change_vehicle, activebackground="#857d7a")
+vehicleButton = Button(window, image=vehicleChoice, borderwidth=0, bg="#857d7a", activebackground="#857d7a", command=change_vehicle)
 vehicleButtonWindow = myCanvas.create_window(336, 590, anchor=NW, window=vehicleButton)
-selectVehicle = myCanvas.create_text(370, 580, text='Click to switch vehicle: ', font=('Aerial', 15))
+selectVehicle = myCanvas.create_text(370, 580, text='Click to switch vehicle: ', font=('Aerial', 15), fill="#290B15")
 
 startButton = Button(window, text="Start", font=("Aerial", 40), borderwidth=0, bg="#857d7a", command=intiating)
-startButtonWindow = myCanvas.create_window(335, 200, window=startButton)
+startButtonWindow = myCanvas.create_window(380, 100, window=startButton)
+
+loadButton = Button(window, text="Load Game", font=("Aerial", 40), borderwidth=0, bg="#857d7a", command=quit)
+loadButtonWindow = myCanvas.create_window(380, 200, window=loadButton)
+
+leaderBoardButton = Button(window, text="Leader Board", font=("Aerial", 40), borderwidth=0, bg="#857d7a", command=leader_board)
+leaderBoardButtonWindow = myCanvas.create_window(380, 300, window=leaderBoardButton)
+
+customiseButton = Button(window, text="Customise", font=("Aerial", 40), borderwidth=0, bg="#857d7a", command= customise)
+customiseButtonWindow = myCanvas.create_window(380, 400, window=customiseButton)
+
+quitButton = Button(window, text="Quit", font=("Aerial", 40), borderwidth=0, bg="#857d7a", command=quit)
+quitButtonWindow = myCanvas.create_window(380, 500, window=quitButton)
 
 
 # intiating()
