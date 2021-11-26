@@ -410,6 +410,7 @@ def home(firstCall):
 
 
 
+
     vehicle_appearance()
 
     startButton = Button(window, text="Start", font=("Aerial", 40),
@@ -450,7 +451,9 @@ def intiating(restart=False):
         delete_home_buttons()
     else:
         playerLives = 5
+        livesMode = True
         pause("Pause", True)
+        # pause(f"You have {playerLives} lives left")
 
     myCanvas.itemconfig(livesText, text='Lives: ' + str(playerLives))
     if selectVehicle in myCanvas.find_all(): myCanvas.delete(selectVehicle)
