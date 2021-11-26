@@ -145,6 +145,25 @@ def save():
         f.writelines(str(playerLives) + "\n")
         f.writelines(chosenVehicle)
         # quit()
+def save_leader_board():
+    global nameWindow, nameprompt
+
+    def add_score():
+        if nameEntry.get(): userName = nameEntry.get()
+        else: userName = "Anonymous"
+        with open("leaderboard.txt", "a") as f:
+            f.writelines(userName + "\n")
+            f.writelines(str(round(score, 2)) + "\n")
+            f.writelines(str(playerLives) + "\n")
+        nameWindow.destroy()
+
+    nameWindow = Toplevel(window)
+    nameWindow.title("Enter your name:")
+
+    nameEntry = Entry(nameWindow, width=50)
+    nameEntry.pack()
+    namebutton = Button(nameWindow, text="Save score to leaderboard", command=add_score)
+    namebutton.pack()
 
 def vehicle_appearance():
     global chosenVehicle, vehicleChoice, vehicleButtonWindow, selectVehicle
@@ -169,6 +188,7 @@ def home(firstCall):
         myCanvas.delete(restartButtonWindow)
         myCanvas.delete(saveButtonWindow)
         myCanvas.delete(homeButtonWindow)
+        save_leader_board()
 
 
 
@@ -316,7 +336,37 @@ def customise():
     pass
 
 def leader_board():
-    pass
+
+    def board_to_home():
+        myCanvas.delete("leaderboard")
+        myCanvas.delete(homeButton2Window)
+        home(True)
+    myCanvas.delete(selectVehicle)
+    delete_home_buttons()
+    playersData = {}
+    with open("leaderboard.txt") as f:
+        data = f.readlines()
+        offset = 0
+        for i in range(int(len(data)/3)):
+            name  = data[i + offset].strip()
+            score = data[i + offset + 1].strip()
+            playersData[name] = float(score)
+            offset += 2
+
+        playersData = {v:k for k, v in playersData.items()}
+        playersData = [(v, k) for k, v in sorted(playersData.items(), reverse=True)]
+        if len(playersData) >= 5: iterations = 5
+        else: iterations = len(playersData)
+
+        for i in range(iterations):
+            myCanvas.create_text(350, i*100 + 50, text=f"{i+1}.{playersData[i][0]}:      {playersData[i][1]}",
+                                 font=("Aerial", 20), tag="leaderboard")
+
+        homeButton2 = Button(window, text="Home", font=("Aerial", 40), borderwidth=0, bg="#857d7a",
+                            activebackground="#857d7a", command=board_to_home)
+        homeButton2Window = myCanvas.create_window(380, 600, window=homeButton2)
+
+
 
 def load():
     global counter, playerLives, chosenVehicle, isLoad
@@ -359,17 +409,19 @@ def boss_key(event):
     myCanvas.unbind('<Return>')
     bossWindow.protocol("WM_DELETE_WINDOW", remove_fullscreen)
 
+def delete_home_buttons():
+    myCanvas.delete(startButtonWindow)
+    myCanvas.delete(loadButtonWindow)
+    myCanvas.delete(leaderBoardButtonWindow)
+    myCanvas.delete(customiseButtonWindow)
+    myCanvas.delete(quitButtonWindow)
+    myCanvas.delete(vehicleButtonWindow)
 
 def intiating(restart=False):
     global playerVehicle, startTime, livesMode, playerLives, timeStamps, \
     unusedTime, totatUnusedTime, counter, score, scoreOffset, isLoad
     if not restart:
-        myCanvas.delete(startButtonWindow)
-        myCanvas.delete(loadButtonWindow)
-        myCanvas.delete(leaderBoardButtonWindow)
-        myCanvas.delete(customiseButtonWindow)
-        myCanvas.delete(quitButtonWindow)
-        myCanvas.delete(vehicleButtonWindow)
+        delete_home_buttons()
     else:
         # livesMode = False
         playerLives = 5
@@ -384,8 +436,8 @@ def intiating(restart=False):
     myCanvas.itemconfig(livesText, text='Lives: ' + str(playerLives))
     if selectVehicle in myCanvas.find_all(): myCanvas.delete(selectVehicle)
     playerVehicle = Vehicle(startingPoint[0], startingPoint[1], chosenVehicle, "player", "player/")
-    # myCanvas.bind_all('<Up>', playerVehicle.dir_up)
-    # myCanvas.bind_all('<Down>', playerVehicle.dir_down)
+    myCanvas.bind_all('<Up>', playerVehicle.dir_up)
+    myCanvas.bind_all('<Down>', playerVehicle.dir_down)
     myCanvas.bind_all('<Left>', playerVehicle.dir_left)
     myCanvas.bind_all('<Right>', playerVehicle.dir_right)
     myCanvas.bind_all('<a>', player_decrease_speed)
@@ -465,6 +517,8 @@ def main_code():
             if not cheatIsOn:
                 if i.draw in myCanvas.find_withtag("bots") and collision(playerVehicle.get_position(), i.get_position()):
                     playerLives -= 1
+                    if playerLives <= 0:
+                        quit() #Add game over
                     myCanvas.itemconfig(livesText, text='Lives: ' + str(playerLives))
                     pause(f"You have {playerLives} lives left")
 
@@ -475,6 +529,7 @@ def main_code():
         elif counter < len(gameLevels) and score >= gameLevels[counter]["score"]:
             print("counter: ", counter, "Score: ", round(score, 2))
             counter += 1
+            pause(f"You have finished level {counter-1}")
             main_code()
         else:
             quit()
