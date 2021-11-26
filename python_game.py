@@ -2,6 +2,7 @@ from tkinter import *
 from random import randint, choice, shuffle
 from time import sleep, time
 
+# Game levels variables
 gameLevels = {
     1: {"score":25,
         "speed":5,
@@ -40,6 +41,7 @@ gameLevels = {
         "maxPeriod":1,
         "miniPeriod":1}}
 
+# Intialising variables, before starting the game
 cheatIsOn     = True
 firstCall     = True
 pauseState    = False
@@ -57,7 +59,7 @@ playerLives        = 5
 vehicleNumbers     = 0
 startingPoint      = [360, 650]
 defualtSpeed       = gameLevels[1]["speed"]
-playerDefualtSpeed = 2
+playerDefualtSpeed = 3
 
 score             = 0
 maxVehicleNumber  = gameLevels[1]["maxVehicles"]
@@ -71,9 +73,12 @@ miniPeriod        = gameLevels[1]["miniPeriod"]
 window = Tk()
 myCanvas = Canvas(window, width=windowWidth, height=windowHeight, bg='#857d7a')
 myCanvas.pack()
+
+#Creating vertical lines to represent lanes
 for i in range(100, windowWidth - 99, 75):
     myCanvas.create_line(i, 0, i, windowHeight, dash=(10, 3))
 
+#Outputing number of lives, score, and the speed for the player in the canvas
 livesText = myCanvas.create_text(10, 10,
                                  text='Lives: ' + str(playerLives),
                                  font=('Aerial', 15), anchor='nw')
@@ -84,8 +89,17 @@ speedText = myCanvas.create_text(750, 10,
                                  text=f'Speed: {playerDefualtSpeed} mph',
                                  font=('Aerial', 15), anchor='ne')
 
+
+
+#Vehicle class controls the different variables and functions for vehicles
 class Vehicle():
 
+    """Initiating the variables for correspondent vehicle
+       including: 1-The position of the vehicle
+                  2-The speed which is randomized for bots vehicles
+                  3-Draw the vehicle in canvas
+                  etc...
+                   """
     def __init__(self, x, y, vehicleType, vehicleTag, player=""):
         self.x     = x
         self.y     = y
@@ -100,6 +114,7 @@ class Vehicle():
         self.width = vehicleWidth
         self.height= vehicleHeight
 
+    #Updating the position of player vehicle when an even is triggered such as clicking right
     def position_update(self):
         pos = self.get_position()
         if pos[1] < 25 or pos[1] > 675 or pos[0] < 125 or pos[0] > 675:
@@ -115,6 +130,7 @@ class Vehicle():
                 myCanvas.move(self.draw, 75, 0)
         self.dir = ""
 
+    #Return the position of vehicle
     def get_position(self):
         pos = myCanvas.coords(self.draw)
         if pos == []:
@@ -122,6 +138,7 @@ class Vehicle():
         pos = pos + [pos[0] + self.width, pos[1] + self.height]
         return pos
 
+    #updating the direction of the player vehicle
     def dir_up(self, event):
         self.dir = "up"
     def dir_down(self, event):
@@ -132,6 +149,7 @@ class Vehicle():
         self.dir = "right"
 
 
+#Creating a random number of bots vehicles in a random lane
 vehicleOpposite = []
 def create_vehicle():
     global vehicleNumbers
@@ -141,6 +159,7 @@ def create_vehicle():
     for i in range(vehicleNumbers):
         vehicleOpposite.append(Vehicle(lanes[i], -50, choice(vehicleOption), "bots"))
 
+#Deleting the vehicles images and updating their state
 def delete_vehicle(all):
     global period, miniPeriod, maxPeriod
     period = randint(miniPeriod, maxPeriod)
@@ -155,6 +174,7 @@ def delete_vehicle(all):
                 myCanvas.delete(i.draw)
                 del i
 
+#Check if two vehicles are colliding
 def collision(pos, pos2):
     if pos[0] < pos2[2] and pos[1] < pos2[3] and pos[2] > pos2[0] and pos[3] > pos2[1]:
         return True
@@ -164,18 +184,21 @@ def collision(pos, pos2):
 def customise():
     pass
 
+#When <d> is clicked, player vehicle speed increases
 def player_increase_speed(event):
     global playerDefualtSpeed
     playerDefualtSpeed += 2
     myCanvas.itemconfig(speedText,
                         text=f'Speed: {playerDefualtSpeed} mph')
 
+#When <a> is clicked, player vehicle speed increases
 def player_decrease_speed(event):
     global playerDefualtSpeed
     playerDefualtSpeed -= 2
     myCanvas.itemconfig(speedText,
                         text=f'Speed: {playerDefualtSpeed} mph')
 
+#Enable/disabling cheat mode when c is either pressed of released
 def cheat_mode_on(event):
     global cheatIsOn
     cheatIsOn = True
@@ -183,6 +206,10 @@ def cheat_mode_off(event):
     global cheatIsOn
     cheatIsOn = False
 
+"""
+When enter is pressed the game will disappear, and another widget is opened 
+which when closed it will return to the game 
+"""
 def boss_key(event):
     global bossImage
 
@@ -193,6 +220,7 @@ def boss_key(event):
 
     pause("Pause")
     window.withdraw()
+
     bossWindow = Toplevel(window)
     bossWindow.title("TradingView")
     bossWindow.iconbitmap('Capture.png')
@@ -200,6 +228,7 @@ def boss_key(event):
     labelImage = Label(bossWindow, image=bossImage)
     labelImage.pack()
     myCanvas.unbind('<Return>')
+
     bossWindow.protocol("WM_DELETE_WINDOW", remove_fullscreen)
 
 def delete_home_buttons():
@@ -210,6 +239,10 @@ def delete_home_buttons():
     myCanvas.delete(quitButtonWindow)
     myCanvas.delete(vehicleButtonWindow)
 
+
+
+#The following two functions allow the player to choose the vehicle.
+#The default vehicle is randomly chosen
 def vehicle_appearance():
     global chosenVehicle, vehicleChoice, vehicleButtonWindow, selectVehicle
     chosenVehicle = choice(vehicleOption)
@@ -222,12 +255,13 @@ def vehicle_appearance():
                                          text='Click to switch vehicle: ',
                                          font=('Aerial', 15), fill="#290B15")
 
-
 def change_vehicle():
     global  chosenVehicle, vehicleChoice, vehicleButton, vehicleButtonWindow
     vehicleIndex = vehicleOption.index(chosenVehicle)
+
     if vehicleIndex == 8:
         vehicleIndex = - vehicleIndex
+
     chosenVehicle = vehicleOption[vehicleIndex + 1]
     vehicleChoice = PhotoImage(file="images/player/" + chosenVehicle + ".png")
     myCanvas.delete(vehicleButtonWindow)
@@ -235,10 +269,11 @@ def change_vehicle():
                            borderwidth=0, bg="#857d7a",
                            command=change_vehicle, activebackground="#857d7a")
     vehicleButtonWindow = myCanvas.create_window(336, 590, anchor=NW, window=vehicleButton)
-    # if selectVehicle in myCanvas.find_all(): myCanvas.delete(selectVehicle)
     myCanvas.itemconfig(selectVehicle, text=chosenVehicle)
 
 
+"""Prompt the player a widget to enter a uername, 
+which will save with the score in the leaderboard file"""
 def save_leader_board():
     global nameWindow, nameprompt
 
@@ -247,10 +282,12 @@ def save_leader_board():
             userName = nameEntry.get()
         else:
             userName = "Anonymous"
+
         with open("leaderboard.txt", "a") as f:
             f.writelines(userName + "\n")
             f.writelines(str(round(score, 2)) + "\n")
             f.writelines(str(playerLives) + "\n")
+
         nameWindow.destroy()
 
     nameWindow = Toplevel(window)
@@ -262,18 +299,22 @@ def save_leader_board():
                         command=add_score)
     namebutton.pack()
 
+"""Retrive plaers score from the leaderboard file and sort it 
+such that the top 5 players score will appear"""
 def leader_board():
-
+    #Return to home page
     def board_to_home():
         myCanvas.delete("leaderboard")
         myCanvas.delete(homeButton2Window)
         home(True)
+
     myCanvas.delete(selectVehicle)
     delete_home_buttons()
     playersData = {}
     with open("leaderboard.txt") as f:
         data = f.readlines()
         offset = 0
+
         for i in range(int(len(data)/3)):
             name  = data[i + offset].strip()
             score = data[i + offset + 1].strip()
@@ -282,6 +323,7 @@ def leader_board():
 
         playersData = {v:k for k, v in playersData.items()}
         playersData = [(v, k) for k, v in sorted(playersData.items(), reverse=True)]
+
         if len(playersData) >= 5: iterations = 5
         else: iterations = len(playersData)
 
@@ -294,9 +336,12 @@ def leader_board():
                              activebackground="#857d7a", command=board_to_home)
         homeButton2Window = myCanvas.create_window(380, 600, window=homeButton2)
 
+
 def load():
     global counter, playerLives, chosenVehicle, isLoad
+
     try:
+        # Retrieve player saved stats
         with open("save.txt") as f:
             data = f.readlines()
             counter = int(data[0])
@@ -308,31 +353,36 @@ def load():
     except FileNotFoundError:
         print("file don't exist")
 
-
+#Save player stats
 def save():
     with open("save.txt", "w") as f:
         f.writelines(str(counter) + "\n")
         f.writelines(str(round(score, 2)) + "\n")
         f.writelines(str(playerLives) + "\n")
         f.writelines(chosenVehicle)
-        # quit()
 
+"""Pause the game when the player press space or moving to next level 
+and display the appropriate text"""
 def pause(textOutput, restart=False):
     global pauseState, pauseText, resumeText, livesMode, restartButtonWindow, saveButtonWindow, \
            homeButtonWindow
+
+    #if pause is called for the second time, to resume the game
     if pauseState:
         myCanvas.delete(pauseText)
         myCanvas.delete(resumeText)
         pauseState = False
         pausePosition = playerVehicle.get_position()
         myCanvas.delete(playerVehicle.draw)
+
+        #if not moving to the next level
         if not livesMode:
             if pausePosition[0] <= 115:
                 playerVehicle.draw = myCanvas.create_image(pausePosition[0] + 75,
                                                            pausePosition[1],
                                                            image=playerVehicle.image,
                                                            tag=playerVehicle.tag)
-                # myCanvas.move(playerVehicle, 75, 0)
+
             elif pausePosition[0] >= 735:
                 playerVehicle.draw = myCanvas.create_image(pausePosition[0] - 75,
                                                            pausePosition[1],
@@ -344,7 +394,6 @@ def pause(textOutput, restart=False):
                                                            pausePosition[1],
                                                            image=playerVehicle.image,
                                                            tag=playerVehicle.tag)
-
 
         else:
             if not restart:
@@ -361,6 +410,7 @@ def pause(textOutput, restart=False):
         myCanvas.delete(saveButtonWindow)
         myCanvas.delete(homeButtonWindow)
         main_code()
+
     else:
         if textOutput.startswith("Y"):
             livesMode = True
@@ -372,6 +422,7 @@ def pause(textOutput, restart=False):
                                           text="Click space to resume",
                                           font=("Aerial", 20), fill="red")
 
+        #Prompt the player buttons in order to restart or sae or return to home page
         restartButton = Button(window, text="Restart", font=("Aerial", 40),
                                borderwidth=0, bg="#857d7a",
                                activebackground="#857d7a",
@@ -393,6 +444,7 @@ def pause(textOutput, restart=False):
         pauseState = True
 
 
+#Home page, prompting the player buttons to start the game, load, check lead board , customise or quit
 def home(firstCall):
     global startButtonWindow, loadButtonWindow,leaderBoardButtonWindow, customiseButtonWindow, \
            quitButtonWindow, restartButtonWindow, saveButtonWindow, \
@@ -407,9 +459,6 @@ def home(firstCall):
         myCanvas.delete(saveButtonWindow)
         myCanvas.delete(homeButtonWindow)
         save_leader_board()
-
-
-
 
     vehicle_appearance()
 
@@ -444,23 +493,29 @@ def home(firstCall):
     quitButtonWindow = myCanvas.create_window(380, 500, window=quitButton)
 
 
+#
 def intiating(restart=False):
     global playerVehicle, startTime, livesMode, playerLives, timeStamps, \
     unusedTime, totatUnusedTime, counter, score, scoreOffset, isLoad
+
+
     if not restart:
         delete_home_buttons()
+
+    #Restarting the game
     else:
         playerLives = 5
         livesMode = True
         pause("Pause", True)
-        # pause(f"You have {playerLives} lives left")
 
     myCanvas.itemconfig(livesText, text='Lives: ' + str(playerLives))
     if selectVehicle in myCanvas.find_all(): myCanvas.delete(selectVehicle)
 
+    #Creating the player vehicle
     playerVehicle = Vehicle(startingPoint[0], startingPoint[1], chosenVehicle, "player", "player/")
-    myCanvas.bind_all('<Up>', playerVehicle.dir_up)
-    myCanvas.bind_all('<Down>', playerVehicle.dir_down)
+
+    # myCanvas.bind_all('<Up>', playerVehicle.dir_up)
+    # myCanvas.bind_all('<Down>', playerVehicle.dir_down)
     myCanvas.bind_all('<Left>', playerVehicle.dir_left)
     myCanvas.bind_all('<Right>', playerVehicle.dir_right)
     myCanvas.bind_all('<a>', player_decrease_speed)
@@ -489,6 +544,7 @@ def main_code():
            counter, defualtSpeed, maxVehicleNumber, miniVehicleNumber, maxPeriod, miniPeriod, \
            period, elapsedTime, scoreOffset
 
+    #Changing the variables for each game level
     defualtSpeed = gameLevels[counter]["speed"]
     maxVehicleNumber = gameLevels[counter]["maxVehicles"]
     miniVehicleNumber = gameLevels[counter]["miniVehicles"]
@@ -497,28 +553,27 @@ def main_code():
     scoreOffset = 50*(counter-1)
 
     while (not pauseState and score<=gameLevels[counter]["score"]):
+        #Game timer
         if unusedTime != 0:
             unusedTime = time() - unusedTime
             totatUnusedTime += unusedTime
         elapsedTime = time() - (startTime + totatUnusedTime)
 
+        #Calculating the score and output it
         if counter > 1:
             score = round((((elapsedTime - scoreOffset) * defualtSpeed) / 10), 2)
             score += gameLevels[counter - 1]["score"]
         else:  score = round((elapsedTime * defualtSpeed) / 10, 2)
 
         myCanvas.itemconfig(scoreText, text=f'Score: {round(score, 2)}')
-        # pause("Pause")
         elapsedTime = int(elapsedTime)
-        # print(elapsedTime)
-        # print(elapsedTime)
-        # period = randint(miniPeriod, maxPeriod)
+
+        #Creating new bots every random period
         if elapsedTime % period == 0 and elapsedTime not in timeStamps:
             timeStamps.append(elapsedTime)
-            # if len(myCanvas.find_withtag("bots")) >= 2 * maxVehicleNumber:
             delete_vehicle(False)
             create_vehicle()
-            # print("speed: ",defualtSpeed, "vehivles: ",len(myCanvas.find_withtag("bots")), "time: ",period)
+
         unusedTime = 0
 
         # update player vehicle position
@@ -527,15 +582,16 @@ def main_code():
         if playerVehicle.get_position()[1] < -50:
             myCanvas.delete(playerVehicle.draw)
             break
-        # print(playerVehicle.get_position())
-        # opposite vehicle motion
+
+        # bot vehicles motion
         for i in vehicleOpposite:
             if i.state != "Deleted" and i.get_position()[1] > 800:
                 myCanvas.delete(i.draw)
                 i.state = "Deleted"
                 continue
             myCanvas.move(i.draw, 0, i.speed)
-            # print(len(myCanvas.find_withtag("bots")))
+
+            #Check if cheat mode is activated
             if not cheatIsOn:
                 if i.draw in myCanvas.find_withtag("bots") and collision(playerVehicle.get_position(), i.get_position()):
                     playerLives -= 1
@@ -547,12 +603,15 @@ def main_code():
         sleep(0.02)
         window.update()
     else:
+        #Calulating the time while not playing
         if pauseState: unusedTime = time()
+        #Move to the next level
         elif counter < len(gameLevels) and score >= gameLevels[counter]["score"]:
             print("counter: ", counter, "Score: ", round(score, 2))
             counter += 1
             pause(f"You have finished level {counter-1}")
             main_code()
+        #finished all levels
         else:
             quit()
 
