@@ -40,38 +40,33 @@ gameLevels = {
         "maxPeriod":1,
         "miniPeriod":1}}
 
+cheatIsOn     = True
+firstCall     = True
 pauseState    = False
 livesMode     = False
-cheatIsOn     = True
 bossMode      = False
 isLoad        = False
-firstCall     = True
-vehicleNumbers = 0
-score         = 0
-period = 5
-startingPoint = [360, 650]
+
+vehicleOption = ['Ambulance', 'Audi', 'Black_viper', 'Car', 'Mini_truck', 'Mini_van', 'Police', 'taxi', 'truck']
 windowWidth   = 800
 windowHeight  = 700
 vehicleWidth  = 55
 vehicleHeight = 128
-defualtSpeed  = gameLevels[1]["speed"]
+
+playerLives        = 5
+vehicleNumbers     = 0
+startingPoint      = [360, 650]
+defualtSpeed       = gameLevels[1]["speed"]
 playerDefualtSpeed = 2
+
+score             = 0
 maxVehicleNumber  = gameLevels[1]["maxVehicles"]
 miniVehicleNumber = gameLevels[1]["miniVehicles"]
-maxPeriod = gameLevels[1]["maxPeriod"]
-miniPeriod = gameLevels[1]["miniPeriod"]
-playerLives   = 5
-vehicleOption = ['Ambulance', 'Audi', 'Black_viper', 'Car', 'Mini_truck', 'Mini_van', 'Police', 'taxi', 'truck']
+period            = 5
+maxPeriod         = gameLevels[1]["maxPeriod"]
+miniPeriod        = gameLevels[1]["miniPeriod"]
 
 
-# window = Tk()
-# myCanvas = Canvas(window, width=windowWidth, height=windowHeight, bg='#857d7a')
-# myCanvas.pack()
-# for i in range(100, windowWidth-99, 75):
-#     myCanvas.create_line(i, 0, i, windowHeight, dash=(10,3))
-#
-# livesText = myCanvas.create_text(10, 10, text='Lives: '+str(playerLives), font=('Aerial', 15), anchor='nw')
-# scoreText = myCanvas.create_text(100, 10, text='Score: 0', font=('Aerial', 15), anchor='nw')
 
 window = Tk()
 myCanvas = Canvas(window, width=windowWidth, height=windowHeight, bg='#857d7a')
@@ -79,9 +74,15 @@ myCanvas.pack()
 for i in range(100, windowWidth - 99, 75):
     myCanvas.create_line(i, 0, i, windowHeight, dash=(10, 3))
 
-livesText = myCanvas.create_text(10, 10, text='Lives: ' + str(playerLives), font=('Aerial', 15), anchor='nw')
-scoreText = myCanvas.create_text(100, 10, text='Score: 0', font=('Aerial', 15), anchor='nw')
-speedText = myCanvas.create_text(750, 10, text=f'Speed: {playerDefualtSpeed} mph', font=('Aerial', 15), anchor='ne')
+livesText = myCanvas.create_text(10, 10,
+                                 text='Lives: ' + str(playerLives),
+                                 font=('Aerial', 15), anchor='nw')
+scoreText = myCanvas.create_text(100, 10,
+                                 text='Score: 0', font=('Aerial', 15),
+                                 anchor='nw')
+speedText = myCanvas.create_text(750, 10,
+                                 text=f'Speed: {playerDefualtSpeed} mph',
+                                 font=('Aerial', 15), anchor='ne')
 
 class Vehicle():
 
@@ -93,7 +94,8 @@ class Vehicle():
         self.dir   = ""
         self.tag = vehicleTag
         self.image = PhotoImage(file=f"images/" + player + vehicleType + ".png")
-        self.draw  = myCanvas.create_image(self.x, self.y, image=self.image, tag=self.tag)
+        self.draw  = myCanvas.create_image(self.x, self.y,
+                                           image=self.image, tag=self.tag)
         self.state = "Exist"
         self.width = vehicleWidth
         self.height= vehicleHeight
@@ -112,15 +114,6 @@ class Vehicle():
             elif self.dir == "right":
                 myCanvas.move(self.draw, 75, 0)
         self.dir = ""
-    #     if self.state == "Deleted":
-    #         pass
-    #     elif self.state == "Destroy":
-    #         pass
-    #     elif self.state == "Exist":
-    #         pos = self.get_position()
-    #
-    #         #Check if car is not touching borders
-    #         if self.dir == "Right":
 
     def get_position(self):
         pos = myCanvas.coords(self.draw)
@@ -138,19 +131,122 @@ class Vehicle():
     def dir_right(self, event):
         self.dir = "right"
 
-def save():
-    with open("save.txt", "w") as f:
-        f.writelines(str(counter) + "\n")
-        f.writelines(str(round(score, 2)) + "\n")
-        f.writelines(str(playerLives) + "\n")
-        f.writelines(chosenVehicle)
-        # quit()
+
+vehicleOpposite = []
+def create_vehicle():
+    global vehicleNumbers
+    vehicleNumbers = int(randint(miniVehicleNumber, maxVehicleNumber))
+    lanes = [135, 210, 285, 360, 435, 510, 585, 660]
+    shuffle(lanes)
+    for i in range(vehicleNumbers):
+        vehicleOpposite.append(Vehicle(lanes[i], -50, choice(vehicleOption), "bots"))
+
+def delete_vehicle(all):
+    global period, miniPeriod, maxPeriod
+    period = randint(miniPeriod, maxPeriod)
+    if all:
+        for i in vehicleOpposite:
+            i.state = "Deleted"
+            myCanvas.delete(i.draw)
+            del i
+    else:
+        for i in vehicleOpposite:
+            if i.state == "Deleted":
+                myCanvas.delete(i.draw)
+                del i
+
+def collision(pos, pos2):
+    if pos[0] < pos2[2] and pos[1] < pos2[3] and pos[2] > pos2[0] and pos[3] > pos2[1]:
+        return True
+    else:
+        return False
+
+def customise():
+    pass
+
+def player_increase_speed(event):
+    global playerDefualtSpeed
+    playerDefualtSpeed += 2
+    myCanvas.itemconfig(speedText,
+                        text=f'Speed: {playerDefualtSpeed} mph')
+
+def player_decrease_speed(event):
+    global playerDefualtSpeed
+    playerDefualtSpeed -= 2
+    myCanvas.itemconfig(speedText,
+                        text=f'Speed: {playerDefualtSpeed} mph')
+
+def cheat_mode_on(event):
+    global cheatIsOn
+    cheatIsOn = True
+def cheat_mode_off(event):
+    global cheatIsOn
+    cheatIsOn = False
+
+def boss_key(event):
+    global bossImage
+
+    def remove_fullscreen():
+        bossWindow.destroy()
+        myCanvas.bind_all('<Return>', boss_key)
+        window.deiconify()
+
+    pause("Pause")
+    window.withdraw()
+    bossWindow = Toplevel(window)
+    bossWindow.title("TradingView")
+    bossWindow.iconbitmap('Capture.png')
+    bossImage = PhotoImage(file="Capture.PNG")
+    labelImage = Label(bossWindow, image=bossImage)
+    labelImage.pack()
+    myCanvas.unbind('<Return>')
+    bossWindow.protocol("WM_DELETE_WINDOW", remove_fullscreen)
+
+def delete_home_buttons():
+    myCanvas.delete(startButtonWindow)
+    myCanvas.delete(loadButtonWindow)
+    myCanvas.delete(leaderBoardButtonWindow)
+    myCanvas.delete(customiseButtonWindow)
+    myCanvas.delete(quitButtonWindow)
+    myCanvas.delete(vehicleButtonWindow)
+
+def vehicle_appearance():
+    global chosenVehicle, vehicleChoice, vehicleButtonWindow, selectVehicle
+    chosenVehicle = choice(vehicleOption)
+    vehicleChoice = PhotoImage(file="images/player/" + chosenVehicle + ".png")
+    vehicleButton = Button(window, image=vehicleChoice, borderwidth=0,
+                           bg="#857d7a", activebackground="#857d7a",
+                           command=change_vehicle)
+    vehicleButtonWindow = myCanvas.create_window(336, 590, anchor=NW, window=vehicleButton)
+    selectVehicle = myCanvas.create_text(370, 580,
+                                         text='Click to switch vehicle: ',
+                                         font=('Aerial', 15), fill="#290B15")
+
+
+def change_vehicle():
+    global  chosenVehicle, vehicleChoice, vehicleButton, vehicleButtonWindow
+    vehicleIndex = vehicleOption.index(chosenVehicle)
+    if vehicleIndex == 8:
+        vehicleIndex = - vehicleIndex
+    chosenVehicle = vehicleOption[vehicleIndex + 1]
+    vehicleChoice = PhotoImage(file="images/player/" + chosenVehicle + ".png")
+    myCanvas.delete(vehicleButtonWindow)
+    vehicleButton = Button(window, image=vehicleChoice,
+                           borderwidth=0, bg="#857d7a",
+                           command=change_vehicle, activebackground="#857d7a")
+    vehicleButtonWindow = myCanvas.create_window(336, 590, anchor=NW, window=vehicleButton)
+    # if selectVehicle in myCanvas.find_all(): myCanvas.delete(selectVehicle)
+    myCanvas.itemconfig(selectVehicle, text=chosenVehicle)
+
+
 def save_leader_board():
     global nameWindow, nameprompt
 
     def add_score():
-        if nameEntry.get(): userName = nameEntry.get()
-        else: userName = "Anonymous"
+        if nameEntry.get():
+            userName = nameEntry.get()
+        else:
+            userName = "Anonymous"
         with open("leaderboard.txt", "a") as f:
             f.writelines(userName + "\n")
             f.writelines(str(round(score, 2)) + "\n")
@@ -162,57 +258,64 @@ def save_leader_board():
 
     nameEntry = Entry(nameWindow, width=50)
     nameEntry.pack()
-    namebutton = Button(nameWindow, text="Save score to leaderboard", command=add_score)
+    namebutton = Button(nameWindow, text="Save score to leaderboard",
+                        command=add_score)
     namebutton.pack()
 
-def vehicle_appearance():
-    global chosenVehicle, vehicleChoice, vehicleButtonWindow, selectVehicle
-    chosenVehicle = choice(vehicleOption)
-    vehicleChoice = PhotoImage(file="images/player/" + chosenVehicle + ".png")
-    vehicleButton = Button(window, image=vehicleChoice, borderwidth=0, bg="#857d7a", activebackground="#857d7a",
-                               command=change_vehicle)
-    vehicleButtonWindow = myCanvas.create_window(336, 590, anchor=NW, window=vehicleButton)
-    selectVehicle = myCanvas.create_text(370, 580, text='Click to switch vehicle: ', font=('Aerial', 15),
-                                             fill="#290B15")
+def leader_board():
 
-def home(firstCall):
-    global startButtonWindow, loadButtonWindow,leaderBoardButtonWindow, customiseButtonWindow, \
-        quitButtonWindow, restartButtonWindow, saveButtonWindow, \
-        homeButtonWindow, playerVehicle, pauseText, resumeText
+    def board_to_home():
+        myCanvas.delete("leaderboard")
+        myCanvas.delete(homeButton2Window)
+        home(True)
+    myCanvas.delete(selectVehicle)
+    delete_home_buttons()
+    playersData = {}
+    with open("leaderboard.txt") as f:
+        data = f.readlines()
+        offset = 0
+        for i in range(int(len(data)/3)):
+            name  = data[i + offset].strip()
+            score = data[i + offset + 1].strip()
+            playersData[name] = float(score)
+            offset += 2
 
-    if not firstCall:
-        delete_vehicle(True)
-        myCanvas.delete(pauseText)
-        myCanvas.delete(resumeText)
-        myCanvas.delete(playerVehicle.draw)
-        myCanvas.delete(restartButtonWindow)
-        myCanvas.delete(saveButtonWindow)
-        myCanvas.delete(homeButtonWindow)
-        save_leader_board()
+        playersData = {v:k for k, v in playersData.items()}
+        playersData = [(v, k) for k, v in sorted(playersData.items(), reverse=True)]
+        if len(playersData) >= 5: iterations = 5
+        else: iterations = len(playersData)
+
+        for i in range(iterations):
+            myCanvas.create_text(350, i*100 + 50, text=f"{i+1}.{playersData[i][0]}:      {playersData[i][1]}",
+                                 font=("Aerial", 20), tag="leaderboard")
+
+        homeButton2 = Button(window, text="Home",
+                             font=("Aerial", 40), borderwidth=0, bg="#857d7a",
+                             activebackground="#857d7a", command=board_to_home)
+        homeButton2Window = myCanvas.create_window(380, 600, window=homeButton2)
+
+def load():
+    global counter, playerLives, chosenVehicle, isLoad
+    try:
+        with open("save.txt") as f:
+            data = f.readlines()
+            counter = int(data[0])
+            playerLives = int(data[2])
+            chosenVehicle = data[3]
+            isLoad = True
+            intiating()
+
+    except FileNotFoundError:
+        print("file don't exist")
 
 
-
-    vehicle_appearance()
-
-    startButton = Button(window, text="Start", font=("Aerial", 40), borderwidth=0, bg="#857d7a",
-                         activebackground="#857d7a", command=intiating)
-    startButtonWindow = myCanvas.create_window(380, 100, window=startButton)
-
-    loadButton = Button(window, text="Load Game", font=("Aerial", 40), borderwidth=0, bg="#857d7a",
-                        activebackground="#857d7a", command=load)
-    loadButtonWindow = myCanvas.create_window(380, 200, window=loadButton)
-
-    leaderBoardButton = Button(window, text="Leader Board", font=("Aerial", 40), borderwidth=0, bg="#857d7a",
-                               activebackground="#857d7a", command=leader_board)
-    leaderBoardButtonWindow = myCanvas.create_window(380, 300, window=leaderBoardButton)
-
-    customiseButton = Button(window, text="Customise", font=("Aerial", 40), borderwidth=0, bg="#857d7a",
-                             activebackground="#857d7a", command=customise)
-    customiseButtonWindow = myCanvas.create_window(380, 400, window=customiseButton)
-
-    quitButton = Button(window, text="Quit", font=("Aerial", 40), borderwidth=0, bg="#857d7a",
-                        activebackground="#857d7a", command=quit)
-    quitButtonWindow = myCanvas.create_window(380, 500, window=quitButton)
+def save():
+    with open("save.txt", "w") as f:
+        f.writelines(str(counter) + "\n")
+        f.writelines(str(round(score, 2)) + "\n")
+        f.writelines(str(playerLives) + "\n")
+        f.writelines(chosenVehicle)
+        # quit()
 
 def pause(textOutput, restart=False):
     global pauseState, pauseText, resumeText, livesMode, restartButtonWindow, saveButtonWindow, \
@@ -262,160 +365,83 @@ def pause(textOutput, restart=False):
         if textOutput.startswith("Y"):
             livesMode = True
 
-        pauseText = myCanvas.create_text(380, 450, text=textOutput, font=("Aerial", 30), fill="red")
-        resumeText = myCanvas.create_text(380, 550, text="Click space to resume", font=("Aerial", 20), fill="red")
+        pauseText = myCanvas.create_text(380, 450,
+                                         text=textOutput,
+                                         font=("Aerial", 30), fill="red")
+        resumeText = myCanvas.create_text(380, 550,
+                                          text="Click space to resume",
+                                          font=("Aerial", 20), fill="red")
 
-        restartButton = Button(window, text="Restart", font=("Aerial", 40), borderwidth=0, bg="#857d7a",
-                                                    activebackground="#857d7a", command=lambda:intiating(True))
+        restartButton = Button(window, text="Restart", font=("Aerial", 40),
+                               borderwidth=0, bg="#857d7a",
+                               activebackground="#857d7a",
+                               command=lambda:intiating(True))
         restartButtonWindow = myCanvas.create_window(380, 100, window=restartButton)
 
-        saveButton = Button(window, text="Save", font=("Aerial", 40), borderwidth=0, bg="#857d7a",
-                               activebackground="#857d7a", command= save)
+        saveButton = Button(window, text="Save", font=("Aerial", 40),
+                            borderwidth=0, bg="#857d7a",
+                            activebackground="#857d7a",
+                            command= save)
         saveButtonWindow = myCanvas.create_window(380, 200, window=saveButton)
 
-        homeButton = Button(window, text="Home", font=("Aerial", 40), borderwidth=0, bg="#857d7a",
-                               activebackground="#857d7a", command=lambda: home(False))
+        homeButton = Button(window, text="Home", font=("Aerial", 40),
+                            borderwidth=0, bg="#857d7a",
+                            activebackground="#857d7a",
+                            command=lambda: home(False))
         homeButtonWindow = myCanvas.create_window(380, 300, window=homeButton)
 
         pauseState = True
 
-def player_increase_speed(event):
-    global playerDefualtSpeed
-    playerDefualtSpeed += 2
-    myCanvas.itemconfig(speedText, text=f'Speed: {playerDefualtSpeed} mph')
 
-def player_decrease_speed(event):
-    global playerDefualtSpeed
-    playerDefualtSpeed -= 2
-    myCanvas.itemconfig(speedText, text=f'Speed: {playerDefualtSpeed} mph')
+def home(firstCall):
+    global startButtonWindow, loadButtonWindow,leaderBoardButtonWindow, customiseButtonWindow, \
+           quitButtonWindow, restartButtonWindow, saveButtonWindow, \
+           homeButtonWindow, playerVehicle, pauseText, resumeText
 
-vehicleOpposite = []
-loop = True
-def create_vehicle():
-    global vehicleNumbers
-    vehicleNumbers = int(randint(miniVehicleNumber, maxVehicleNumber))
-    lanes = [135, 210, 285, 360, 435, 510, 585, 660]
-    shuffle(lanes)
-    for i in range(vehicleNumbers):
-        vehicleOpposite.append(Vehicle(lanes[i], -50, choice(vehicleOption), "bots"))
-
-def collision(pos, pos2):
-    if pos[0] < pos2[2] and pos[1] < pos2[3] and pos[2] > pos2[0] and pos[3] > pos2[1]:
-        return True
-    else:
-        return False
-
-def delete_vehicle(all):
-    global period, miniPeriod, maxPeriod
-    period = randint(miniPeriod, maxPeriod)
-    if all:
-        for i in vehicleOpposite:
-            i.state = "Deleted"
-            myCanvas.delete(i.draw)
-            del i
-    else:
-        for i in vehicleOpposite:
-            if i.state == "Deleted":
-                myCanvas.delete(i.draw)
-                del i
-
-def change_vehicle():
-    global  chosenVehicle, vehicleChoice, vehicleButton, vehicleButtonWindow
-    vehicleIndex = vehicleOption.index(chosenVehicle)
-    if vehicleIndex == 8:
-        vehicleIndex = - vehicleIndex
-    chosenVehicle = vehicleOption[vehicleIndex + 1]
-    vehicleChoice = PhotoImage(file="images/player/" + chosenVehicle + ".png")
-    myCanvas.delete(vehicleButtonWindow)
-    vehicleButton = Button(window, image=vehicleChoice, borderwidth=0, bg="#857d7a", command=change_vehicle, activebackground="#857d7a")
-    vehicleButtonWindow = myCanvas.create_window(336, 590, anchor=NW, window=vehicleButton)
-    # if selectVehicle in myCanvas.find_all(): myCanvas.delete(selectVehicle)
-    myCanvas.itemconfig(selectVehicle, text=chosenVehicle)
-
-def customise():
-    pass
-
-def leader_board():
-
-    def board_to_home():
-        myCanvas.delete("leaderboard")
-        myCanvas.delete(homeButton2Window)
-        home(True)
-    myCanvas.delete(selectVehicle)
-    delete_home_buttons()
-    playersData = {}
-    with open("leaderboard.txt") as f:
-        data = f.readlines()
-        offset = 0
-        for i in range(int(len(data)/3)):
-            name  = data[i + offset].strip()
-            score = data[i + offset + 1].strip()
-            playersData[name] = float(score)
-            offset += 2
-
-        playersData = {v:k for k, v in playersData.items()}
-        playersData = [(v, k) for k, v in sorted(playersData.items(), reverse=True)]
-        if len(playersData) >= 5: iterations = 5
-        else: iterations = len(playersData)
-
-        for i in range(iterations):
-            myCanvas.create_text(350, i*100 + 50, text=f"{i+1}.{playersData[i][0]}:      {playersData[i][1]}",
-                                 font=("Aerial", 20), tag="leaderboard")
-
-        homeButton2 = Button(window, text="Home", font=("Aerial", 40), borderwidth=0, bg="#857d7a",
-                            activebackground="#857d7a", command=board_to_home)
-        homeButton2Window = myCanvas.create_window(380, 600, window=homeButton2)
+    if not firstCall:
+        delete_vehicle(True)
+        myCanvas.delete(pauseText)
+        myCanvas.delete(resumeText)
+        myCanvas.delete(playerVehicle.draw)
+        myCanvas.delete(restartButtonWindow)
+        myCanvas.delete(saveButtonWindow)
+        myCanvas.delete(homeButtonWindow)
+        save_leader_board()
 
 
 
-def load():
-    global counter, playerLives, chosenVehicle, isLoad
-    try:
-        with open("save.txt") as f:
-            data = f.readlines()
-            counter = int(data[0])
-            playerLives = int(data[2])
-            chosenVehicle = data[3]
-            isLoad = True
-            intiating()
+    vehicle_appearance()
 
-    except FileNotFoundError:
-        print("file don't exist")
+    startButton = Button(window, text="Start", font=("Aerial", 40),
+                         borderwidth=0, bg="#857d7a",
+                         activebackground="#857d7a",
+                         command=intiating)
+    startButtonWindow = myCanvas.create_window(380, 100, window=startButton)
 
+    loadButton = Button(window, text="Load Game", font=("Aerial", 40),
+                        borderwidth=0, bg="#857d7a",
+                        activebackground="#857d7a",
+                        command=load)
+    loadButtonWindow = myCanvas.create_window(380, 200, window=loadButton)
 
-def cheat_mode_on(event):
-    global cheatIsOn
-    cheatIsOn = True
-def cheat_mode_off(event):
-    global cheatIsOn
-    cheatIsOn = False
+    leaderBoardButton = Button(window, text="Leader Board", font=("Aerial", 40),
+                               borderwidth=0, bg="#857d7a",
+                               activebackground="#857d7a",
+                               command=leader_board)
+    leaderBoardButtonWindow = myCanvas.create_window(380, 300, window=leaderBoardButton)
 
-def boss_key(event):
-    global bossImage
+    customiseButton = Button(window, text="Customise", font=("Aerial", 40),
+                             borderwidth=0, bg="#857d7a",
+                             activebackground="#857d7a",
+                             command=customise)
+    customiseButtonWindow = myCanvas.create_window(380, 400, window=customiseButton)
 
-    def remove_fullscreen():
-        bossWindow.destroy()
-        myCanvas.bind_all('<Return>', boss_key)
-        window.deiconify()
+    quitButton = Button(window, text="Quit", font=("Aerial", 40),
+                        borderwidth=0, bg="#857d7a",
+                        activebackground="#857d7a",
+                        command=quit)
+    quitButtonWindow = myCanvas.create_window(380, 500, window=quitButton)
 
-    pause("Pause")
-    window.withdraw()
-    bossWindow = Toplevel(window)
-    bossWindow.title("TradingView")
-    bossWindow.iconbitmap('Capture.png')
-    bossImage = PhotoImage(file="Capture.PNG")
-    labelImage = Label(bossWindow, image=bossImage)
-    labelImage.pack()
-    myCanvas.unbind('<Return>')
-    bossWindow.protocol("WM_DELETE_WINDOW", remove_fullscreen)
-
-def delete_home_buttons():
-    myCanvas.delete(startButtonWindow)
-    myCanvas.delete(loadButtonWindow)
-    myCanvas.delete(leaderBoardButtonWindow)
-    myCanvas.delete(customiseButtonWindow)
-    myCanvas.delete(quitButtonWindow)
-    myCanvas.delete(vehicleButtonWindow)
 
 def intiating(restart=False):
     global playerVehicle, startTime, livesMode, playerLives, timeStamps, \
@@ -423,18 +449,12 @@ def intiating(restart=False):
     if not restart:
         delete_home_buttons()
     else:
-        # livesMode = False
         playerLives = 5
         pause("Pause", True)
-        # delete_vehicle(True)
-        # myCanvas.delete(playerVehicle.draw)
-        # playerVehicle.draw = myCanvas.create_image(startingPoint[0],
-        #                                            startingPoint[1],
-        #                                            image=playerVehicle.image,
-        #                                            tag=playerVehicle.tag)
 
     myCanvas.itemconfig(livesText, text='Lives: ' + str(playerLives))
     if selectVehicle in myCanvas.find_all(): myCanvas.delete(selectVehicle)
+
     playerVehicle = Vehicle(startingPoint[0], startingPoint[1], chosenVehicle, "player", "player/")
     myCanvas.bind_all('<Up>', playerVehicle.dir_up)
     myCanvas.bind_all('<Down>', playerVehicle.dir_down)
@@ -450,7 +470,6 @@ def intiating(restart=False):
     if not isLoad:
         counter = 1
         startTime = time()
-
     else:
         scoreOffset = 0
         startTime = time() - (counter - 1) * 50
@@ -460,12 +479,12 @@ def intiating(restart=False):
     timeStamps = []
     unusedTime = 0
     totatUnusedTime = 0
-    # startTime = time()
     main_code()
 
 def main_code():
-    global pauseState, playerLives, scoreText, unusedTime, totatUnusedTime, score, counter, defualtSpeed, \
-    maxVehicleNumber, miniVehicleNumber, maxPeriod, miniPeriod, period, elapsedTime, scoreOffset
+    global pauseState, playerLives, scoreText, unusedTime, totatUnusedTime, score, \
+           counter, defualtSpeed, maxVehicleNumber, miniVehicleNumber, maxPeriod, miniPeriod, \
+           period, elapsedTime, scoreOffset
 
     defualtSpeed = gameLevels[counter]["speed"]
     maxVehicleNumber = gameLevels[counter]["maxVehicles"]
@@ -534,8 +553,5 @@ def main_code():
         else:
             quit()
 
-
 home(True)
-
-# intiating()
 window.mainloop()
