@@ -1,6 +1,23 @@
+"""
+RESOLUTION: 2560 x 1440
+Press enter for boss key
+Hold c to activate cheat code
+press d to increase your vehicle speed
+press a to decrease your vehicle speed
+press space to pause
+press right to move right
+press left to move left
+
+Source for game sprites
+https://opengameart.org/content/free-top-down-car-sprites-by-unlucky-studio
+"""
+
 from tkinter import *
+from tkinter import messagebox
 from random import randint, choice, shuffle
 from time import sleep, time
+
+
 
 # Game levels variables
 gameLevels = {
@@ -8,7 +25,7 @@ gameLevels = {
         "speed":5,
         "maxVehicles":3,
         "miniVehicles":0,
-        "maxPeriod":6,
+        "maxPeriod":4,
         "miniPeriod":3},
     2: {"score":75,
         "speed":10,
@@ -42,7 +59,7 @@ gameLevels = {
         "miniPeriod":1}}
 
 # Intialising variables, before starting the game
-cheatIsOn     = True
+cheatIsOn     = False
 firstCall     = True
 pauseState    = False
 livesMode     = False
@@ -62,6 +79,7 @@ defualtSpeed       = gameLevels[1]["speed"]
 playerDefualtSpeed = 3
 
 score             = 0
+counter           = 0
 maxVehicleNumber  = gameLevels[1]["maxVehicles"]
 miniVehicleNumber = gameLevels[1]["miniVehicles"]
 period            = 5
@@ -181,8 +199,21 @@ def collision(pos, pos2):
     else:
         return False
 
+#Change the background colour
 def customise():
-    pass
+    def game_level():
+        myCanvas.config(bg=gameLevelEntry.get())
+
+
+    customiseWindow = Toplevel(window)
+    customiseWindow.title("Customise")
+
+    gameLevelLabel = Label(customiseWindow, text="Enter colour: ")
+    gameLevelLabel.pack()
+    gameLevelEntry = Entry(customiseWindow, width =50)
+    gameLevelEntry.pack()
+    gameLevelButton = Button(customiseWindow, text="Start", command=game_level)
+    gameLevelButton.pack()
 
 #When <d> is clicked, player vehicle speed increases
 def player_increase_speed(event):
@@ -354,7 +385,7 @@ def load():
         print("file don't exist")
 
 #Save player stats
-def save():
+def save(lvl=0):
     with open("save.txt", "w") as f:
         f.writelines(str(counter) + "\n")
         f.writelines(str(round(score, 2)) + "\n")
@@ -493,7 +524,7 @@ def home(firstCall):
     quitButtonWindow = myCanvas.create_window(380, 500, window=quitButton)
 
 
-#
+
 def intiating(restart=False):
     global playerVehicle, startTime, livesMode, playerLives, timeStamps, \
     unusedTime, totatUnusedTime, counter, score, scoreOffset, isLoad
@@ -595,10 +626,11 @@ def main_code():
             if not cheatIsOn:
                 if i.draw in myCanvas.find_withtag("bots") and collision(playerVehicle.get_position(), i.get_position()):
                     playerLives -= 1
-                    if playerLives <= 0:
-                        quit() #Add game over
                     myCanvas.itemconfig(livesText, text='Lives: ' + str(playerLives))
                     pause(f"You have {playerLives} lives left")
+                    if playerLives <= 0:
+                        messagebox.showinfo("Game Over", "Game Over")
+                        home(False)
 
         sleep(0.02)
         window.update()
@@ -613,7 +645,10 @@ def main_code():
             main_code()
         #finished all levels
         else:
-            quit()
+            pause("You Finished all level, Congratulation!")
+            myCanvas.delete(restartButtonWindow)
+            myCanvas.delete(saveButtonWindow)
+
 
 home(True)
 window.mainloop()
