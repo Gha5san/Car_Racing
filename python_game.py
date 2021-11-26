@@ -44,6 +44,7 @@ pauseState    = False
 livesMode     = False
 cheatIsOn     = True
 bossMode      = False
+isLoad        = False
 vehicleNumbers = 0
 score         = 0
 period = 5
@@ -136,8 +137,22 @@ class Vehicle():
     def dir_right(self, event):
         self.dir = "right"
 
+def save():
+    with open("save.txt", "w") as f:
+        f.writelines(str(counter) + "\n")
+        f.writelines(str(round(score, 2)) + "\n")
+        f.writelines(str(playerLives) + "\n")
+        f.writelines(chosenVehicle)
+        # quit()
+
+
+
+def home():
+    pass
+
 def pause(textOutput, restart=False):
-    global pauseState, pauseText, resumeText, livesMode, restartButtonWindow
+    global pauseState, pauseText, resumeText, livesMode, restartButtonWindow, saveButtonWindow, \
+           homeButtonWindow
     if pauseState:
         myCanvas.delete(pauseText)
         myCanvas.delete(resumeText)
@@ -170,23 +185,33 @@ def pause(textOutput, restart=False):
                                                            startingPoint[1],
                                                            image=playerVehicle.image,
                                                            tag=playerVehicle.tag)
+
             livesMode = False
             delete_vehicle(True)
-            myCanvas.delete(restartButtonWindow)
-            # create_vehicle()
 
+
+        myCanvas.delete(restartButtonWindow)
+        myCanvas.delete(saveButtonWindow)
+        myCanvas.delete(homeButtonWindow)
         main_code()
     else:
-        if textOutput == "Pause":
-            pauseText = myCanvas.create_text(400, 350, text=textOutput, font=("Aerial", 100), fill="Black")
-            resumeText = myCanvas.create_text(400, 450, text="Click space to resume", font=("Aerial", 20), fill="Black")
-        elif textOutput.startswith("Y"):
-            pauseText = myCanvas.create_text(400, 450, text=textOutput, font=("Aerial", 30), fill="red")
-            resumeText = myCanvas.create_text(400, 550, text="Click space to resume", font=("Aerial", 20), fill="red")
+        if textOutput.startswith("Y"):
             livesMode = True
-            restartButton = Button(window, text="Restart", font=("Aerial", 40), borderwidth=0, bg="#857d7a",
-                                                        activebackground="#857d7a", command=lambda:intiating(True))
-            restartButtonWindow = myCanvas.create_window(380, 100, window=restartButton)
+
+        pauseText = myCanvas.create_text(380, 450, text=textOutput, font=("Aerial", 30), fill="red")
+        resumeText = myCanvas.create_text(380, 550, text="Click space to resume", font=("Aerial", 20), fill="red")
+
+        restartButton = Button(window, text="Restart", font=("Aerial", 40), borderwidth=0, bg="#857d7a",
+                                                    activebackground="#857d7a", command=lambda:intiating(True))
+        restartButtonWindow = myCanvas.create_window(380, 100, window=restartButton)
+
+        saveButton = Button(window, text="Save", font=("Aerial", 40), borderwidth=0, bg="#857d7a",
+                               activebackground="#857d7a", command= save)
+        saveButtonWindow = myCanvas.create_window(380, 200, window=saveButton)
+
+        homeButton = Button(window, text="Home", font=("Aerial", 40), borderwidth=0, bg="#857d7a",
+                               activebackground="#857d7a", command= home)
+        homeButtonWindow = myCanvas.create_window(380, 300, window=homeButton)
 
         pauseState = True
 
@@ -249,6 +274,21 @@ def customise():
 def leader_board():
     pass
 
+def load():
+    global counter, playerLives, chosenVehicle, isLoad
+    try:
+        with open("save.txt") as f:
+            data = f.readlines()
+            counter = int(data[0])
+            playerLives = int(data[2])
+            chosenVehicle = data[3]
+            isLoad = True
+            intiating()
+
+    except FileNotFoundError:
+        print("file don't exist")
+
+
 def cheat_mode_on(event):
     global cheatIsOn
     cheatIsOn = True
@@ -277,7 +317,7 @@ def boss_key(event):
 
 def intiating(restart=False):
     global playerVehicle, startTime, livesMode, playerLives, timeStamps, \
-    unusedTime, totatUnusedTime, counter, score
+    unusedTime, totatUnusedTime, counter, score, scoreOffset
     if not restart:
         myCanvas.delete(startButtonWindow)
         myCanvas.delete(loadButtonWindow)
@@ -310,35 +350,49 @@ def intiating(restart=False):
     myCanvas.bind_all('<KeyRelease-c>', cheat_mode_off)
     myCanvas.bind_all('<Return>', boss_key)
 
+    if not isLoad:
+        counter = 1
+        startTime = time()
+
+    else:
+        scoreOffset = 0
+        startTime = time() - (counter - 1) * 50
+
     score = 0
     timeStamps = []
     unusedTime = 0
     totatUnusedTime = 0
-    counter = 1
-    startTime = time()
+    # startTime = time()
     main_code()
-
 
 def main_code():
     global pauseState, playerLives, scoreText, unusedTime, totatUnusedTime, score, counter, defualtSpeed, \
-    maxVehicleNumber, miniVehicleNumber, maxPeriod, miniPeriod, period
+    maxVehicleNumber, miniVehicleNumber, maxPeriod, miniPeriod, period, elapsedTime, scoreOffset, isLoad
 
     defualtSpeed = gameLevels[counter]["speed"]
     maxVehicleNumber = gameLevels[counter]["maxVehicles"]
     miniVehicleNumber = gameLevels[counter]["miniVehicles"]
     maxPeriod = gameLevels[counter]["maxPeriod"]
     miniPeriod = gameLevels[counter]["miniPeriod"]
+    scoreOffset = 50*(counter-1)
 
-    while (not pauseState and score<gameLevels[counter]["score"]):
+    while (not pauseState and score<=gameLevels[counter]["score"]):
         if unusedTime != 0:
             unusedTime = time() - unusedTime
             totatUnusedTime += unusedTime
         elapsedTime = time() - (startTime + totatUnusedTime)
+
         if counter > 1:
-            score = round(((elapsedTime - 50*(counter-1)) * defualtSpeed) / 10, 2)
-            score += gameLevels[counter-1]["score"]
-        else: score = (elapsedTime * defualtSpeed) / 10
+            score = round((((elapsedTime - scoreOffset) * defualtSpeed) / 10), 2)
+            if isLoad:
+                # score += ((3/2) * scoreOffset * defualtSpeed) / 10
+                score += gameLevels[counter - 1]["score"]
+            else:
+                score += gameLevels[counter - 1]["score"]
+        else:  score = round((elapsedTime * defualtSpeed) / 10, 2)
+
         myCanvas.itemconfig(scoreText, text=f'Score: {round(score, 2)}')
+        # pause("Pause")
         elapsedTime = int(elapsedTime)
         # print(elapsedTime)
         # print(elapsedTime)
@@ -376,7 +430,8 @@ def main_code():
         window.update()
     else:
         if pauseState: unusedTime = time()
-        elif counter < len(gameLevels) and score>gameLevels[counter]["score"]:
+        elif counter < len(gameLevels) and score >= gameLevels[counter]["score"]:
+            print("counter: ", counter, "Score: ", round(score, 2))
             counter += 1
             main_code()
         else:
@@ -392,7 +447,7 @@ selectVehicle = myCanvas.create_text(370, 580, text='Click to switch vehicle: ',
 startButton = Button(window, text="Start", font=("Aerial", 40), borderwidth=0, bg="#857d7a", activebackground="#857d7a", command=intiating)
 startButtonWindow = myCanvas.create_window(380, 100, window=startButton)
 
-loadButton = Button(window, text="Load Game", font=("Aerial", 40), borderwidth=0, bg="#857d7a", activebackground="#857d7a", command=quit)
+loadButton = Button(window, text="Load Game", font=("Aerial", 40), borderwidth=0, bg="#857d7a", activebackground="#857d7a", command=load)
 loadButtonWindow = myCanvas.create_window(380, 200, window=loadButton)
 
 leaderBoardButton = Button(window, text="Leader Board", font=("Aerial", 40), borderwidth=0, bg="#857d7a", activebackground="#857d7a", command=leader_board)
